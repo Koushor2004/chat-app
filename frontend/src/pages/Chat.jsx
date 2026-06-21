@@ -31,7 +31,6 @@ const Chat = () => {
 
   useEffect(() => {
     fetchRooms();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCreateRoom = async (name) => {
