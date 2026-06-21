@@ -2,8 +2,8 @@ const Message = require('../models/Message');
 const Room = require('../models/Room');
 const socketAuth = require('./socketAuth');
 
-
 const roomUsers = new Map();
+const globalOnlineUsers = new Map(); // userId -> { id, username, count }
 
 const getOnlineUsersInRoom = (roomId) => {
   const usersMap = roomUsers.get(roomId);
@@ -19,7 +19,30 @@ const initSocket = (io) => {
   io.use(socketAuth);
 
   io.on('connection', (socket) => {
-    console.log(`Socket connected: ${socket.user.username} (${socket.id})`);
+    const userId = socket.user.id;
+    const username = socket.user.username;
+
+    console.log(`Socket connected: ${username} (${socket.id})`);
+
+    // Join the user's private socket room for DMs
+    socket.join(`user_${userId}`);
+
+    // Update global online users count
+    if (!globalOnlineUsers.has(userId)) {
+      globalOnlineUsers.set(userId, { id: userId, username, count: 0 });
+    }
+    globalOnlineUsers.get(userId).count += 1;
+
+    // Broadcast updated global online list
+    const broadcastOnlineList = () => {
+      const list = Array.from(globalOnlineUsers.values()).map((u) => ({
+        id: u.id,
+        username: u.username,
+      }));
+      io.emit('globalOnlineUsers', list);
+    };
+
+    broadcastOnlineList();
 
     let currentRoomId = null;
 
@@ -30,6 +53,12 @@ const initSocket = (io) => {
         const room = await Room.findById(roomId);
         if (!room) {
           socket.emit('errorMessage', { message: 'Room not found' });
+          return;
+        }
+
+        // Restrict room joining to members
+        if (!room.members || !room.members.includes(userId)) {
+          socket.emit('errorMessage', { message: 'You must join this room to view its chat' });
           return;
         }
 
@@ -48,7 +77,7 @@ const initSocket = (io) => {
         if (!roomUsers.has(roomId)) {
           roomUsers.set(roomId, new Map());
         }
-        roomUsers.get(roomId).set(socket.id, { id: socket.user.id, username: socket.user.username });
+        roomUsers.get(roomId).set(socket.id, { id: userId, username });
 
         const history = await Message.find({ room: roomId })
           .sort({ createdAt: 1 })
@@ -57,7 +86,7 @@ const initSocket = (io) => {
         socket.emit('chatHistory', history);
 
         io.to(roomId).emit('onlineUsers', getOnlineUsersInRoom(roomId));
-        socket.to(roomId).emit('userJoined', { username: socket.user.username });
+        socket.to(roomId).emit('userJoined', { username });
       } catch (error) {
         console.error('joinRoom error:', error.message);
         socket.emit('errorMessage', { message: 'Failed to join room' });
@@ -68,18 +97,24 @@ const initSocket = (io) => {
       try {
         if (!roomId || !text || !text.trim()) return;
 
+        const room = await Room.findById(roomId);
+        if (!room || !room.members || !room.members.includes(userId)) {
+          socket.emit('errorMessage', { message: 'You must join this room to send messages' });
+          return;
+        }
+
         const message = await Message.create({
           room: roomId,
-          sender: socket.user.id,
-          senderUsername: socket.user.username,
+          sender: userId,
+          senderUsername: username,
           text: text.trim(),
         });
 
         io.to(roomId).emit('chatMessage', {
           _id: message._id,
           room: roomId,
-          sender: socket.user.id,
-          senderUsername: socket.user.username,
+          sender: userId,
+          senderUsername: username,
           text: message.text,
           createdAt: message.createdAt,
         });
@@ -89,22 +124,72 @@ const initSocket = (io) => {
       }
     });
 
-    socket.on('typing', ({ roomId, isTyping }) => {
+    socket.on('typing', async ({ roomId, isTyping }) => {
       if (!roomId) return;
       socket.to(roomId).emit('typing', {
-        username: socket.user.username,
+        username,
+        isTyping: !!isTyping,
+      });
+    });
+
+    // 1-to-1 direct messaging event
+    socket.on('privateMessage', async ({ recipientId, text }) => {
+      try {
+        if (!recipientId || !text || !text.trim()) return;
+
+        const message = await Message.create({
+          recipient: recipientId,
+          sender: userId,
+          senderUsername: username,
+          text: text.trim(),
+        });
+
+        const msgPayload = {
+          _id: message._id,
+          recipient: recipientId,
+          sender: userId,
+          senderUsername: username,
+          text: message.text,
+          createdAt: message.createdAt,
+        };
+
+        // Emit to both recipient's and sender's user rooms
+        io.to(`user_${recipientId}`).emit('privateMessage', msgPayload);
+        io.to(`user_${userId}`).emit('privateMessage', msgPayload);
+      } catch (error) {
+        console.error('privateMessage error:', error.message);
+        socket.emit('errorMessage', { message: 'Failed to send private message' });
+      }
+    });
+
+    // 1-to-1 typing event
+    socket.on('privateTyping', ({ recipientId, isTyping }) => {
+      if (!recipientId) return;
+      io.to(`user_${recipientId}`).emit('privateTyping', {
+        senderId: userId,
+        username,
         isTyping: !!isTyping,
       });
     });
 
     socket.on('disconnect', () => {
-      console.log(`Socket disconnected: ${socket.user.username} (${socket.id})`);
+      console.log(`Socket disconnected: ${username} (${socket.id})`);
       if (currentRoomId) {
         const usersMap = roomUsers.get(currentRoomId);
         if (usersMap) {
           usersMap.delete(socket.id);
           io.to(currentRoomId).emit('onlineUsers', getOnlineUsersInRoom(currentRoomId));
-          socket.to(currentRoomId).emit('userLeft', { username: socket.user.username });
+          socket.to(currentRoomId).emit('userLeft', { username });
+        }
+      }
+
+      // Decrement global online connections
+      if (globalOnlineUsers.has(userId)) {
+        const userObj = globalOnlineUsers.get(userId);
+        userObj.count -= 1;
+        if (userObj.count <= 0) {
+          globalOnlineUsers.delete(userId);
+          broadcastOnlineList();
         }
       }
     });

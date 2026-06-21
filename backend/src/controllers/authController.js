@@ -69,4 +69,14 @@ const getMe = async (req, res) => {
   return res.status(200).json({ _id: req.user._id, username: req.user.username });
 };
 
-module.exports = { registerUser, loginUser, getMe };
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({ _id: { $ne: req.user._id } }).select('username _id');
+    return res.status(200).json(users);
+  } catch (error) {
+    console.error('Get all users error:', error.message);
+    return res.status(500).json({ message: 'Server error fetching users' });
+  }
+};
+
+module.exports = { registerUser, loginUser, getMe, getAllUsers };

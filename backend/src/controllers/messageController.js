@@ -15,6 +15,11 @@ const getRoomMessages = async (req, res) => {
       return res.status(404).json({ message: 'Room not found' });
     }
 
+    // Verify room membership
+    if (!room.members || !room.members.includes(req.user._id.toString())) {
+      return res.status(403).json({ message: 'You must join this room to view its messages' });
+    }
+
     const messages = await Message.find({ room: roomId })
       .sort({ createdAt: 1 })
       .limit(200)

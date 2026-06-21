@@ -23,7 +23,11 @@ const createRoom = async (req, res) => {
       return res.status(409).json({ message: 'Room already exists' });
     }
 
-    const room = await Room.create({ name: name.trim(), createdBy: req.user._id });
+    const room = await Room.create({
+      name: name.trim(),
+      createdBy: req.user._id,
+      members: [req.user._id],
+    });
     const populatedRoom = await room.populate('createdBy', 'username');
 
     return res.status(201).json(populatedRoom);
@@ -33,4 +37,26 @@ const createRoom = async (req, res) => {
   }
 };
 
-module.exports = { getRooms, createRoom };
+const joinRoom = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const room = await Room.findById(roomId);
+
+    if (!room) {
+      return res.status(404).json({ message: 'Room not found' });
+    }
+
+    if (!room.members.includes(req.user._id)) {
+      room.members.push(req.user._id);
+      await room.save();
+    }
+
+    const populatedRoom = await room.populate('createdBy', 'username');
+    return res.status(200).json(populatedRoom);
+  } catch (error) {
+    console.error('Join room error:', error.message);
+    return res.status(500).json({ message: 'Server error joining room' });
+  }
+};
+
+module.exports = { getRooms, createRoom, joinRoom };
