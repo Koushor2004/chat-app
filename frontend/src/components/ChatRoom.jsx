@@ -20,7 +20,7 @@ const ChatRoom = ({ activeChat, onJoinRoom }) => {
   const messagesEndRef = useRef(null);
   const typingClearTimers = useRef({});
 
-  // Effect 1: Handle Room Chat Socket Connection & Events
+
   useEffect(() => {
     if (!socket || !connected || !activeChat || activeChat.type !== 'room') return;
 
@@ -81,7 +81,7 @@ const ChatRoom = ({ activeChat, onJoinRoom }) => {
     };
   }, [socket, connected, activeChat, user._id]);
 
-  // Effect 2: Handle Direct Messaging HTTP Fetching & Socket Events
+
   useEffect(() => {
     if (!socket || !connected || !activeChat || activeChat.type !== 'dm') return;
 
@@ -139,7 +139,7 @@ const ChatRoom = ({ activeChat, onJoinRoom }) => {
     };
   }, [socket, connected, activeChat, user._id]);
 
-  // Auto-scroll to bottom on new messages
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -172,7 +172,7 @@ const ChatRoom = ({ activeChat, onJoinRoom }) => {
     );
   }
 
-  // Handle Join Room prompt
+
   if (activeChat.type === 'room') {
     const room = activeChat.data;
     const isMember = room.members && room.members.includes(user._id);
