@@ -13,7 +13,7 @@ const Chat = () => {
   const [rooms, setRooms] = useState([]);
   const [users, setUsers] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
-  const [activeChat, setActiveChat] = useState(null); // { type: 'room'|'dm', data: room|user }
+  const [activeChat, setActiveChat] = useState(null);
   const [loadingRooms, setLoadingRooms] = useState(true);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -22,7 +22,6 @@ const Chat = () => {
     try {
       const { data } = await api.get('/rooms');
       setRooms(data);
-      // Keep active room selection in sync if it still exists
       if (activeChat && activeChat.type === 'room') {
         const stillExists = data.find((r) => r._id === activeChat.data._id);
         if (!stillExists) {
@@ -54,7 +53,6 @@ const Chat = () => {
     fetchUsers();
   }, []);
 
-  // Listen for global online users updates
   useEffect(() => {
     if (!socket) return;
 

@@ -3,7 +3,7 @@ const Room = require('../models/Room');
 const socketAuth = require('./socketAuth');
 
 const roomUsers = new Map();
-const globalOnlineUsers = new Map(); // userId -> { id, username, count }
+const globalOnlineUsers = new Map();
 
 const getOnlineUsersInRoom = (roomId) => {
   const usersMap = roomUsers.get(roomId);
@@ -24,16 +24,15 @@ const initSocket = (io) => {
 
     console.log(`Socket connected: ${username} (${socket.id})`);
 
-    // Join the user's private socket room for DMs
     socket.join(`user_${userId}`);
 
-    // Update global online users count
+
     if (!globalOnlineUsers.has(userId)) {
       globalOnlineUsers.set(userId, { id: userId, username, count: 0 });
     }
     globalOnlineUsers.get(userId).count += 1;
 
-    // Broadcast updated global online list
+
     const broadcastOnlineList = () => {
       const list = Array.from(globalOnlineUsers.values()).map((u) => ({
         id: u.id,
@@ -56,7 +55,7 @@ const initSocket = (io) => {
           return;
         }
 
-        // Restrict room joining to members
+
         if (!room.members || !room.members.includes(userId)) {
           socket.emit('errorMessage', { message: 'You must join this room to view its chat' });
           return;
@@ -132,7 +131,7 @@ const initSocket = (io) => {
       });
     });
 
-    // 1-to-1 direct messaging event
+
     socket.on('privateMessage', async ({ recipientId, text }) => {
       try {
         if (!recipientId || !text || !text.trim()) return;
@@ -153,7 +152,7 @@ const initSocket = (io) => {
           createdAt: message.createdAt,
         };
 
-        // Emit to both recipient's and sender's user rooms
+
         io.to(`user_${recipientId}`).emit('privateMessage', msgPayload);
         io.to(`user_${userId}`).emit('privateMessage', msgPayload);
       } catch (error) {
@@ -162,7 +161,6 @@ const initSocket = (io) => {
       }
     });
 
-    // 1-to-1 typing event
     socket.on('privateTyping', ({ recipientId, isTyping }) => {
       if (!recipientId) return;
       io.to(`user_${recipientId}`).emit('privateTyping', {
@@ -183,7 +181,7 @@ const initSocket = (io) => {
         }
       }
 
-      // Decrement global online connections
+
       if (globalOnlineUsers.has(userId)) {
         const userObj = globalOnlineUsers.get(userId);
         userObj.count -= 1;
