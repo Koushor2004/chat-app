@@ -113,38 +113,50 @@ const Chat = () => {
           <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />
         )}
         <aside className={`chat-sidebar ${sidebarOpen ? 'chat-sidebar-open' : ''}`}>
-          <RoomList
-            rooms={rooms}
-            activeRoomId={activeChat?.type === 'room' ? activeChat.data._id : null}
-            onSelectRoom={handleSelectRoom}
-            onCreateRoom={handleCreateRoom}
-            loadingRooms={loadingRooms}
-          />
+          <div className="sidebar-scrollable-content">
+            <RoomList
+              rooms={rooms}
+              activeRoomId={activeChat?.type === 'room' ? activeChat.data._id : null}
+              onSelectRoom={handleSelectRoom}
+              onCreateRoom={handleCreateRoom}
+              loadingRooms={loadingRooms}
+            />
 
-          <div className="dm-section">
-            <h2 className="room-list-title">Direct Messages</h2>
-            <div className="dm-items">
-              {loadingUsers ? (
-                <p className="room-empty">Loading users...</p>
-              ) : users.length === 0 ? (
-                <p className="room-empty">No other users found</p>
-              ) : (
-                users.map((u) => {
-                  const isOnline = onlineUsers.some((ou) => ou.id === u._id);
-                  const isActive = activeChat?.type === 'dm' && activeChat.data._id === u._id;
-                  return (
-                    <button
-                      key={u._id}
-                      className={`room-item dm-item ${isActive ? 'room-item-active' : ''}`}
-                      onClick={() => handleSelectDM(u)}
-                    >
-                      <span className={`status-dot ${isOnline ? 'online' : 'offline'}`} />
-                      <span className="dm-username">{u.username}</span>
-                    </button>
-                  );
-                })
-              )}
+            <div className="dm-section">
+              <h2 className="room-list-title">Direct Messages</h2>
+              <div className="dm-items">
+                {loadingUsers ? (
+                  <p className="room-empty">Loading users...</p>
+                ) : users.length === 0 ? (
+                  <p className="room-empty">No other users found</p>
+                ) : (
+                  users.map((u) => {
+                    const isOnline = onlineUsers.some((ou) => ou.id === u._id);
+                    const isActive = activeChat?.type === 'dm' && activeChat.data._id === u._id;
+                    return (
+                      <button
+                        key={u._id}
+                        className={`room-item dm-item ${isActive ? 'room-item-active' : ''}`}
+                        onClick={() => handleSelectDM(u)}
+                      >
+                        <span className={`status-dot ${isOnline ? 'online' : 'offline'}`} />
+                        <span className="dm-username">{u.username}</span>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
             </div>
+          </div>
+
+          <div className="sidebar-user-section">
+            <div className="sidebar-user-info">
+              <span className="sidebar-user-dot" />
+              <span className="sidebar-username">{user.username}</span>
+            </div>
+            <button className="sidebar-logout-btn" onClick={logout} aria-label="Log out">
+              Log Out
+            </button>
           </div>
         </aside>
 

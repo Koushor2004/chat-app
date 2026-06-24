@@ -73,8 +73,63 @@
   flex-shrink: 0;
   background: var(--color-surface);
   border-right: 1px solid var(--color-border);
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-scrollable-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sidebar-user-section {
+  flex-shrink: 0;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: var(--color-surface-raised);
+  border-top: 1px solid var(--color-border);
+}
+
+.sidebar-user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-user-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-success);
+  box-shadow: 0 0 6px rgba(54, 211, 153, 0.6);
+}
+
+.sidebar-username {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.sidebar-logout-btn {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+}
+
+.sidebar-logout-btn:hover {
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+  background: rgba(255, 92, 92, 0.08);
 }
 
 .sidebar-backdrop {
@@ -554,7 +609,7 @@
   }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 1024px) {
   /* No active chat: channels list fills screen */
   .chat-page.no-active-chat .chat-main {
     display: none;
@@ -593,7 +648,7 @@
   }
 
   .chat-back-btn {
-    display: inline-flex;
+    display: none !important; /* Hide back button, rely on hamburger drawer */
   }
 
   .message-bubble {
