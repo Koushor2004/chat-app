@@ -11,7 +11,7 @@ const formatTime = (isoString) => {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
-const ChatRoom = ({ activeChat, onJoinRoom }) => {
+const ChatRoom = ({ activeChat, onJoinRoom, onBack, onToggleSidebar }) => {
   const { user } = useAuth();
   const { socket, connected } = useSocket();
   const [messages, setMessages] = useState([]);
@@ -202,7 +202,19 @@ const ChatRoom = ({ activeChat, onJoinRoom }) => {
     <div className="chat-room">
       <div className="chat-room-main">
         <div className="chat-room-header">
-          <h2>{chatTitle}</h2>
+          <div className="chat-room-header-left">
+            {onToggleSidebar && (
+              <button className="chat-sidebar-toggle" onClick={onToggleSidebar} aria-label="Open menu">
+                ☰
+              </button>
+            )}
+            {onBack && (
+              <button className="chat-back-btn" onClick={onBack} aria-label="Back to rooms">
+                ←
+              </button>
+            )}
+            <h2>{chatTitle}</h2>
+          </div>
           <span className={`connection-badge ${connected ? 'connection-on' : 'connection-off'}`}>
             {connected ? 'Connected' : 'Connecting...'}
           </span>

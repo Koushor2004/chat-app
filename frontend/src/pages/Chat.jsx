@@ -109,6 +109,9 @@ const Chat = () => {
       </header>
 
       <div className="chat-body">
+        {sidebarOpen && (
+          <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />
+        )}
         <aside className={`chat-sidebar ${sidebarOpen ? 'chat-sidebar-open' : ''}`}>
           <RoomList
             rooms={rooms}
@@ -146,7 +149,12 @@ const Chat = () => {
         </aside>
 
         <main className="chat-main">
-          <ChatRoom activeChat={activeChat} onJoinRoom={handleJoinRoom} />
+          <ChatRoom 
+            activeChat={activeChat} 
+            onJoinRoom={handleJoinRoom} 
+            onBack={() => setActiveChat(null)}
+            onToggleSidebar={() => setSidebarOpen((s) => !s)}
+          />
         </main>
       </div>
     </div>
