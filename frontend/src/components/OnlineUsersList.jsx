@@ -1,6 +1,6 @@
-const OnlineUsersList = ({ users, currentUsername }) => {
+const OnlineUsersList = ({ users, currentUsername, className = '' }) => {
   return (
-    <div className="online-users">
+    <div className={`online-users ${className}`.trim()}>
       <h3 className="online-users-title">
         Online <span className="online-count">({users.length})</span>
       </h3>

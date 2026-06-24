@@ -17,6 +17,7 @@ const ChatRoom = ({ activeChat, onJoinRoom, onBack, onToggleSidebar }) => {
   const [messages, setMessages] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [typingUsers, setTypingUsers] = useState([]);
+  const [onlinePanelOpen, setOnlinePanelOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const typingClearTimers = useRef({});
 
@@ -144,6 +145,10 @@ const ChatRoom = ({ activeChat, onJoinRoom, onBack, onToggleSidebar }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  useEffect(() => {
+    setOnlinePanelOpen(false);
+  }, [activeChat]);
+
   const handleSendMessage = (text) => {
     if (!socket || !activeChat) return;
 
@@ -215,9 +220,20 @@ const ChatRoom = ({ activeChat, onJoinRoom, onBack, onToggleSidebar }) => {
             )}
             <h2>{chatTitle}</h2>
           </div>
-          <span className={`connection-badge ${connected ? 'connection-on' : 'connection-off'}`}>
-            {connected ? 'Connected' : 'Connecting...'}
-          </span>
+          <div className="chat-room-header-right">
+            {isRoom && (
+              <button
+                className="chat-online-toggle"
+                onClick={() => setOnlinePanelOpen((open) => !open)}
+                aria-label="Show online members"
+              >
+                ☰
+              </button>
+            )}
+            <span className={`connection-badge ${connected ? 'connection-on' : 'connection-off'}`}>
+              {connected ? 'Connected' : 'Connecting...'}
+            </span>
+          </div>
         </div>
 
         <div className="messages-container">
@@ -246,7 +262,16 @@ const ChatRoom = ({ activeChat, onJoinRoom, onBack, onToggleSidebar }) => {
       </div>
 
       {isRoom && (
-        <OnlineUsersList users={onlineUsers} currentUsername={user.username} />
+        <>
+          {onlinePanelOpen && (
+            <div className="online-users-backdrop" onClick={() => setOnlinePanelOpen(false)} />
+          )}
+          <OnlineUsersList
+            users={onlineUsers}
+            currentUsername={user.username}
+            className={onlinePanelOpen ? 'online-users-open' : ''}
+          />
+        </>
       )}
     </div>
   );

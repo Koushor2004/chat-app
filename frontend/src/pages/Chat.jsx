@@ -94,7 +94,7 @@ const Chat = () => {
   };
 
   return (
-    <div className="chat-page">
+    <div className={`chat-page ${activeChat ? 'has-active-chat' : 'no-active-chat'}`}>
       <header className="chat-topbar">
         <button className="sidebar-toggle" onClick={() => setSidebarOpen((s) => !s)} aria-label="Toggle rooms">
           ☰
